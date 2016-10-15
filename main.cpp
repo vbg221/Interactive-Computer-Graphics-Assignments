@@ -9,29 +9,48 @@ GLuint program;
 GLuint vertPostionVBO;
 GLuint vertColorVBO;
 GLuint positionAttribute;
+GLuint positionAttribute2;
 GLuint modelViewMatrixUniformLocation;
+GLuint modelViewMatrixUniformLocation2;
 GLuint projectionMatrixUniformLocation;
+GLuint projectionMatrixUniformLocation2;
 GLuint colorAttribute;
+GLuint colorAttribute2;
 GLuint positionUniform;
+int *ptr1;
 
 
+struct Entity {
+	Cvec3 t;
+	Cvec3 r;
+	Cvec3 s;
+
+	Matrix4 modelMatrix;
+	Entity *parent;
+} Obj1, Obj2;
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(program);
+	float time = glutGet(GLUT_ELAPSED_TIME);
 
-	/*Drawing the first Cube.*/
+	/*Drawing the first Cube. Worked Fine until Child Cube came into picture.*/
 	Matrix4 objectMatrix;
-	objectMatrix = objectMatrix.makeYRotation(30.0);
+
+	Obj1.t = { 0.0, 0.0, 0.0 };
+	Obj1.r = { 0.0, 30.0, 0.0 };
+	Obj1.s = { 1.0, 1.0, 1.0 };
+
+	objectMatrix = objectMatrix.makeYRotation((float)Obj1.r[1] * (float)time / 1000.0f);
 
 	Matrix4 eyeMatrix;
 	eyeMatrix = eyeMatrix.makeTranslation(Cvec3(0.0, 0.0, 10.0));
-	Matrix4 modelViewMatrix = inv(eyeMatrix) * objectMatrix;
+	Obj1.modelMatrix = inv(eyeMatrix) * objectMatrix;
 
 	GLfloat glmatrix[16];
-	modelViewMatrix.writeToColumnMajorMatrix(glmatrix);
+	Obj1.modelMatrix.writeToColumnMajorMatrix(glmatrix);
 	glUniformMatrix4fv(modelViewMatrixUniformLocation, 1, false, glmatrix);
 
 	Matrix4 projectionMatrix;
@@ -48,7 +67,44 @@ void display(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vertColorVBO);
 	glVertexAttribPointer(colorAttribute, 4, GL_FLOAT, false, 0, 0);
 	glEnableVertexAttribArray(colorAttribute);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36); 
+
+
+	/*Plot child cube*/
 	
+	Obj2.t = { 5.0, 3.0, 0.0 };
+	Obj2.r = { 0.0, 30.0, 0.0 };
+	Obj2.s = { 2.5, 2.5, 2.5 };
+	Obj2.parent = &Obj1;
+
+	Matrix4 objectMatrix2;
+	
+	Matrix4 eyeMatrix2;
+	
+	Obj2.modelMatrix = Obj2.parent->modelMatrix * objectMatrix2.makeTranslation(Obj2.t) * objectMatrix2.makeYRotation(Obj2.r[1]) * objectMatrix2.makeScale(Obj2.s);  //Previously it was inverse of eye matrix. I put Model Matrix of Parent Object1 in here.
+	
+
+	Obj2.modelMatrix.writeToColumnMajorMatrix(glmatrix);
+	glUniformMatrix4fv(modelViewMatrixUniformLocation2, 1, false, glmatrix);
+
+	Matrix4 projectionMatrix2;
+	projectionMatrix2 = projectionMatrix2.makeProjection(45.0, 1.0, -0.1, -100.0);
+
+	GLfloat glmatrixProjection2[16];
+	projectionMatrix2.writeToColumnMajorMatrix(glmatrixProjection2);
+	glUniformMatrix4fv(projectionMatrixUniformLocation2, 1, false, glmatrixProjection2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertPostionVBO);
+	glVertexAttribPointer(positionAttribute2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(positionAttribute2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertColorVBO);
+	glVertexAttribPointer(colorAttribute2, 4, GL_FLOAT, false, 0, 0);
+	glEnableVertexAttribArray(colorAttribute2);
+
+
+
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	
@@ -76,6 +132,10 @@ void init() {
 	colorAttribute = glGetAttribLocation(program, "color");
 	modelViewMatrixUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
+	modelViewMatrixUniformLocation2 = glGetUniformLocation(program, "modelViewMatrix");
+	projectionMatrixUniformLocation2 = glGetUniformLocation(program, "projectionMatrix");
+
+
 
 	glGenBuffers(1, &vertPostionVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, vertPostionVBO);
