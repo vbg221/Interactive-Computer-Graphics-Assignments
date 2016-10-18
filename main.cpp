@@ -1,7 +1,8 @@
 #include "glsupport.h"
-#include <glut.h>
-#include <iostream>
+#include "glut.h"
+#include "iostream"
 #include "matrix4.h"
+#include "quat.h"
 
 using namespace std;
 
@@ -9,29 +10,57 @@ GLuint program;
 GLuint vertPostionVBO;
 GLuint vertColorVBO;
 GLuint positionAttribute;
-GLuint positionAttribute2;
-GLuint positionAttribute3;
 GLuint modelViewMatrixUniformLocation;
-GLuint modelViewMatrixUniformLocation2;
-GLuint modelViewMatrixUniformLocation3;
 GLuint projectionMatrixUniformLocation;
-GLuint projectionMatrixUniformLocation2;
-GLuint projectionMatrixUniformLocation3;
 GLuint colorAttribute;
-GLuint colorAttribute2;
-GLuint colorAttribute3;
 GLuint positionUniform;
 int *ptr1;
 
 
-struct Entity {
+class Entity {
+public:
+
 	Cvec3 t;
 	Cvec3 r;
 	Cvec3 s;
 
 	Matrix4 modelMatrix;
 	Entity *parent;
-} Obj1, Obj2, Obj3;
+
+
+	/*	This constructer sets the Object scale property to 1.0 by default.
+	*/
+	Entity(void) {
+		s = {1.0, 1.0, 1.0};
+	}
+
+
+	/*	This constructer initializes the object by setting up its transformation coordinates.
+
+		Arguments	: Takes 3 Cvec3 type vectors for Translation, Rotation and Scaling respectively.
+	*/
+	Entity(Cvec3 tr, Cvec3 ro, Cvec3 sc) {
+		t = tr;
+		r = ro;
+		s = sc;
+	}
+
+
+
+	/*	This function applies transformation to the object. (Independent translation, rotation and scaling)
+		
+		Arguments	: Takes floating point values to determine whether it changes with time or not. (1 in case it does not change with time.)
+
+		Output		: Transformed Model Matrix. 	
+	*/
+	void Transformation(float t1, float t2, float t3) {
+		Quat Qx = Quat::makeXRotation(r[0] * t1);
+		Quat Qy = Quat::makeYRotation(r[1] * t2);
+		Quat Qz = Quat::makeZRotation(r[2] * t3);
+		Matrix4 rotation = quatToMatrix(Qx * Qy * Qz);
+		modelMatrix = modelMatrix.makeTranslation(t) * rotation * modelMatrix.makeScale(s);
+	}
+};
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -39,19 +68,22 @@ void display(void) {
 
 	glUseProgram(program);
 	float time = glutGet(GLUT_ELAPSED_TIME);
+	float t1 = -((float)time / 1000.0f);
 
-	/*Plot first Cube.*/
-	Matrix4 objectMatrix;
 
-	Obj1.t = { 0.0, 0.0, 0.0 };
-	Obj1.r = { 0.0, 30.0, 0.0 };
-	Obj1.s = { 1.0, 1.0, 1.0 };
 
-	objectMatrix = objectMatrix.makeYRotation((float)Obj1.r[1] * (float)time / 1000.0f);
+	/*	Plot first Cube.	*/
+	
+	Cvec3 tr = { 0.0, 0.0, 0.0 };
+	Cvec3 ro = { 0.0, 30.0, 0.0 };
+	Cvec3 sc = { 1.0, 1.0, 1.0 };
+	Entity Obj1(tr, ro, sc);
+	Obj1.Transformation(1.0, t1, 1.0);
 
 	Matrix4 eyeMatrix;
 	eyeMatrix = eyeMatrix.makeTranslation(Cvec3(0.0, 0.0, 35.0));
-	Obj1.modelMatrix = inv(eyeMatrix) * objectMatrix;
+
+	Obj1.modelMatrix = inv(eyeMatrix) * Obj1.modelMatrix;
 
 	GLfloat glmatrix[16];
 	Obj1.modelMatrix.writeToColumnMajorMatrix(glmatrix);
@@ -75,69 +107,36 @@ void display(void) {
 	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
 
-	/*Plot child cube*/
-	
-	Obj2.t = { 3.5, 3.5, 3.5 };
-	Obj2.r = { 0.0, 30.0, 30.0 };
-	Obj2.s = { 2.0, 2.0, 2.0 };
-	Obj2.parent = &Obj1;
 
-	Matrix4 objectMatrix2;
+	/*	Plot child cube		*/
 	
-	
-	Obj2.modelMatrix = Obj2.parent->modelMatrix * objectMatrix2.makeTranslation(Obj2.t) * objectMatrix2.makeYRotation(Obj2.r[1]) * objectMatrix2.makeZRotation(Obj2.r[3] * -((float)time/100.0f)) * objectMatrix2.makeScale(Obj2.s); 
-	
+	tr = { 3.5, 3.5, 3.5 };
+	ro = { 0.0, 30.0, 30.0 };
+	sc = { 2.0, 2.0, 2.0 };
+	Entity Obj2(tr, ro, sc);
+	Obj2.parent = &Obj1;
+	Obj2.Transformation(1.0, 1.0, t1);
+	Obj2.modelMatrix = Obj2.parent->modelMatrix * Obj2.modelMatrix;
 
 	Obj2.modelMatrix.writeToColumnMajorMatrix(glmatrix);
-	glUniformMatrix4fv(modelViewMatrixUniformLocation2, 1, false, glmatrix);
-
-	Matrix4 projectionMatrix2;
-	projectionMatrix2 = projectionMatrix2.makeProjection(45.0, 1.0, -0.1, -100.0);
-
-	GLfloat glmatrixProjection2[16];
-	projectionMatrix2.writeToColumnMajorMatrix(glmatrixProjection2);
-	glUniformMatrix4fv(projectionMatrixUniformLocation2, 1, false, glmatrixProjection2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertPostionVBO);
-	glVertexAttribPointer(positionAttribute2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(positionAttribute2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertColorVBO);
-	glVertexAttribPointer(colorAttribute2, 4, GL_FLOAT, false, 0, 0);
-	glEnableVertexAttribArray(colorAttribute2);
-
+	glUniformMatrix4fv(modelViewMatrixUniformLocation, 1, false, glmatrix);
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
-	/*Plot third Cube.*/
 
-	Obj3.t = { -5.0, -5.0, -1.5 };
-	Obj3.r = { 0.0, 45.0, 60.0 };
-	Obj3.s = { 3.0, 3.0, 3.0 };
+
+	/*	Plot third Cube.	*/
+
+	tr = { -5.0, -5.0, -1.5 };
+	ro = { 0.0, 45.0, 60.0 };
+	sc = { 3.0, 3.0, 3.0 };
+	Entity Obj3(tr, ro, sc);
 	Obj3.parent = &Obj2;
-
-	Matrix4 objectMatrix3;
-
-	Obj3.modelMatrix = Obj3.parent->modelMatrix * objectMatrix3.makeTranslation(Obj3.t) * objectMatrix2.makeYRotation(Obj2.r[1]) * objectMatrix2.makeZRotation(Obj2.r[3] * ((float)time / 100.0f)) * objectMatrix3.makeScale(Obj3.s);
-
+	Obj3.Transformation(1.0, 1.0, t1);
+	Obj3.modelMatrix = Obj3.parent->modelMatrix * Obj3.modelMatrix;
 
 	Obj3.modelMatrix.writeToColumnMajorMatrix(glmatrix);
-	glUniformMatrix4fv(modelViewMatrixUniformLocation3, 1, false, glmatrix);
-
-	Matrix4 projectionMatrix3;
-	projectionMatrix3 = projectionMatrix3.makeProjection(45.0, 1.0, -0.1, -100.0);
-
-	GLfloat glmatrixProjection3[16];
-	projectionMatrix3.writeToColumnMajorMatrix(glmatrixProjection3);
-	glUniformMatrix4fv(projectionMatrixUniformLocation3, 1, false, glmatrixProjection3);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertPostionVBO);
-	glVertexAttribPointer(positionAttribute3, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(positionAttribute3);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertColorVBO);
-	glVertexAttribPointer(colorAttribute3, 4, GL_FLOAT, false, 0, 0);
-	glEnableVertexAttribArray(colorAttribute3);
+	glUniformMatrix4fv(modelViewMatrixUniformLocation, 1, false, glmatrix);
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -161,20 +160,10 @@ void init() {
 
 	glUseProgram(program);
 	positionAttribute = glGetAttribLocation(program, "position");
-	positionAttribute2 = glGetAttribLocation(program, "position");
-	positionAttribute3 = glGetAttribLocation(program, "position");
 	positionUniform = glGetUniformLocation(program, "modelPosition");
 	colorAttribute = glGetAttribLocation(program, "color");
-	colorAttribute2 = glGetAttribLocation(program, "color");
-	colorAttribute3 = glGetAttribLocation(program, "color");
 	modelViewMatrixUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
-	modelViewMatrixUniformLocation2 = glGetUniformLocation(program, "modelViewMatrix");
-	modelViewMatrixUniformLocation3 = glGetUniformLocation(program, "modelViewMatrix");
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
-	projectionMatrixUniformLocation2 = glGetUniformLocation(program, "projectionMatrix");
-	projectionMatrixUniformLocation3 = glGetUniformLocation(program, "projectionMatrix");
-	
-	
 
 
 	glGenBuffers(1, &vertPostionVBO);
