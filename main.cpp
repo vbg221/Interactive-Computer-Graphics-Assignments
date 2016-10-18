@@ -1,3 +1,16 @@
+/*
+	Auther		: Vatsal Biren Gopani
+	NetID		: N17368916
+	Subject		: Interactive Computer Graphics
+	Assignment	: 2
+	Description	: This program uses the 3 Objects in heirarchy and applies different transformations on them.
+				  It also uses simple lighting shader to show lighting effect. 
+
+*/
+
+
+
+
 #include "glsupport.h"
 #include "glut.h"
 #include "iostream"
