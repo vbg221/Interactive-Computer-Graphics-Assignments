@@ -1,4 +1,4 @@
 ﻿  main.cpp
-d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\main.cpp(21): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\main.cpp(41): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   TemplateProject.vcxproj -> D:\NYU\Sem 1\Inteactive Computer Graphics\My Program\Assignment 2\template\windows\Debug\TemplateProject.exe
   TemplateProject.vcxproj -> D:\NYU\Sem 1\Inteactive Computer Graphics\My Program\Assignment 2\template\windows\Debug\TemplateProject.pdb (Full PDB)

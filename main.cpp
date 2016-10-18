@@ -10,12 +10,16 @@ GLuint vertPostionVBO;
 GLuint vertColorVBO;
 GLuint positionAttribute;
 GLuint positionAttribute2;
+GLuint positionAttribute3;
 GLuint modelViewMatrixUniformLocation;
 GLuint modelViewMatrixUniformLocation2;
+GLuint modelViewMatrixUniformLocation3;
 GLuint projectionMatrixUniformLocation;
 GLuint projectionMatrixUniformLocation2;
+GLuint projectionMatrixUniformLocation3;
 GLuint colorAttribute;
 GLuint colorAttribute2;
+GLuint colorAttribute3;
 GLuint positionUniform;
 int *ptr1;
 
@@ -27,7 +31,7 @@ struct Entity {
 
 	Matrix4 modelMatrix;
 	Entity *parent;
-} Obj1, Obj2;
+} Obj1, Obj2, Obj3;
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -36,7 +40,7 @@ void display(void) {
 	glUseProgram(program);
 	float time = glutGet(GLUT_ELAPSED_TIME);
 
-	/*Drawing the first Cube. Worked Fine until Child Cube came into picture.*/
+	/*Plot first Cube.*/
 	Matrix4 objectMatrix;
 
 	Obj1.t = { 0.0, 0.0, 0.0 };
@@ -46,7 +50,7 @@ void display(void) {
 	objectMatrix = objectMatrix.makeYRotation((float)Obj1.r[1] * (float)time / 1000.0f);
 
 	Matrix4 eyeMatrix;
-	eyeMatrix = eyeMatrix.makeTranslation(Cvec3(0.0, 0.0, 10.0));
+	eyeMatrix = eyeMatrix.makeTranslation(Cvec3(0.0, 0.0, 35.0));
 	Obj1.modelMatrix = inv(eyeMatrix) * objectMatrix;
 
 	GLfloat glmatrix[16];
@@ -73,16 +77,15 @@ void display(void) {
 
 	/*Plot child cube*/
 	
-	Obj2.t = { 5.0, 3.0, 0.0 };
-	Obj2.r = { 0.0, 30.0, 0.0 };
-	Obj2.s = { 2.5, 2.5, 2.5 };
+	Obj2.t = { 3.5, 3.5, 3.5 };
+	Obj2.r = { 0.0, 30.0, 30.0 };
+	Obj2.s = { 2.0, 2.0, 2.0 };
 	Obj2.parent = &Obj1;
 
 	Matrix4 objectMatrix2;
 	
-	Matrix4 eyeMatrix2;
 	
-	Obj2.modelMatrix = Obj2.parent->modelMatrix * objectMatrix2.makeTranslation(Obj2.t) * objectMatrix2.makeYRotation(Obj2.r[1]) * objectMatrix2.makeScale(Obj2.s);  //Previously it was inverse of eye matrix. I put Model Matrix of Parent Object1 in here.
+	Obj2.modelMatrix = Obj2.parent->modelMatrix * objectMatrix2.makeTranslation(Obj2.t) * objectMatrix2.makeYRotation(Obj2.r[1]) * objectMatrix2.makeZRotation(Obj2.r[3] * -((float)time/100.0f)) * objectMatrix2.makeScale(Obj2.s); 
 	
 
 	Obj2.modelMatrix.writeToColumnMajorMatrix(glmatrix);
@@ -104,10 +107,40 @@ void display(void) {
 	glEnableVertexAttribArray(colorAttribute2);
 
 
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	/*Plot third Cube.*/
+
+	Obj3.t = { -5.0, -5.0, -1.5 };
+	Obj3.r = { 0.0, 45.0, 60.0 };
+	Obj3.s = { 3.0, 3.0, 3.0 };
+	Obj3.parent = &Obj2;
+
+	Matrix4 objectMatrix3;
+
+	Obj3.modelMatrix = Obj3.parent->modelMatrix * objectMatrix3.makeTranslation(Obj3.t) * objectMatrix2.makeYRotation(Obj2.r[1]) * objectMatrix2.makeZRotation(Obj2.r[3] * ((float)time / 100.0f)) * objectMatrix3.makeScale(Obj3.s);
+
+
+	Obj3.modelMatrix.writeToColumnMajorMatrix(glmatrix);
+	glUniformMatrix4fv(modelViewMatrixUniformLocation3, 1, false, glmatrix);
+
+	Matrix4 projectionMatrix3;
+	projectionMatrix3 = projectionMatrix3.makeProjection(45.0, 1.0, -0.1, -100.0);
+
+	GLfloat glmatrixProjection3[16];
+	projectionMatrix3.writeToColumnMajorMatrix(glmatrixProjection3);
+	glUniformMatrix4fv(projectionMatrixUniformLocation3, 1, false, glmatrixProjection3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertPostionVBO);
+	glVertexAttribPointer(positionAttribute3, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(positionAttribute3);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertColorVBO);
+	glVertexAttribPointer(colorAttribute3, 4, GL_FLOAT, false, 0, 0);
+	glEnableVertexAttribArray(colorAttribute3);
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
-	
 	
 	/*Disabling Attributes.*/
 	glDisableVertexAttribArray(positionAttribute);
@@ -128,13 +161,20 @@ void init() {
 
 	glUseProgram(program);
 	positionAttribute = glGetAttribLocation(program, "position");
+	positionAttribute2 = glGetAttribLocation(program, "position");
+	positionAttribute3 = glGetAttribLocation(program, "position");
 	positionUniform = glGetUniformLocation(program, "modelPosition");
 	colorAttribute = glGetAttribLocation(program, "color");
+	colorAttribute2 = glGetAttribLocation(program, "color");
+	colorAttribute3 = glGetAttribLocation(program, "color");
 	modelViewMatrixUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
-	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	modelViewMatrixUniformLocation2 = glGetUniformLocation(program, "modelViewMatrix");
+	modelViewMatrixUniformLocation3 = glGetUniformLocation(program, "modelViewMatrix");
+	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	projectionMatrixUniformLocation2 = glGetUniformLocation(program, "projectionMatrix");
-
+	projectionMatrixUniformLocation3 = glGetUniformLocation(program, "projectionMatrix");
+	
+	
 
 
 	glGenBuffers(1, &vertPostionVBO);
