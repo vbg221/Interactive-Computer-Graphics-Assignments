@@ -2,20 +2,18 @@
 	Auther		: Vatsal Biren Gopani
 	NetID		: N17368916
 	Subject		: Interactive Computer Graphics
-	Assignment	: 2
-	Description	: This program uses the 3 Objects in heirarchy and applies different transformations on them.
-				  It also uses simple lighting shader to show lighting effect. 
+	
 
 */
-
-
-
 
 #include "glsupport.h"
 #include "glut.h"
 #include "iostream"
 #include "matrix4.h"
 #include "quat.h"
+#include "math.h"
+#include "vector"
+#include "geometrymaker.h"
 
 using namespace std;
 
@@ -28,6 +26,46 @@ GLuint normalPositionVBO;
 GLuint normalAttribute;
 GLuint normalMatrixUniformLocation;
 
+//Now the variables for the second half i.e. automization
+GLuint VertexBO;
+GLuint IndexBO;
+
+
+
+struct VertexPN {
+	Cvec3f p;
+	Cvec3f n;
+
+	VertexPN() {}
+	VertexPN(float x, float y, float z, float nx, float ny, float nz) : p(x,y,z), n(nx, ny, nz) {}
+
+	VertexPN& operator = (const GenericVertex& v) {
+		p = v.pos;
+		n = v.normal;
+		return *this;
+	}
+};
+
+
+
+struct Geometry{
+	//GLuint VertexBO;
+	//GLuint indexBO;
+	//int numIndices;
+
+	void Draw() {
+		glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+		glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
+		glEnableVertexAttribArray(positionAttribute);
+
+		glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
+		glEnableVertexAttribArray(normalAttribute);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
+		glDrawElements(GL_TRIANGLES, sizeof(VertexPN) * 8, GL_UNSIGNED_SHORT, 0);
+	}
+};
+
 
 class Entity {
 public:
@@ -38,6 +76,7 @@ public:
 
 	Matrix4 modelMatrix;
 	Entity *parent;
+	Geometry geometry;
 
 
 	/*	This constructer sets the Object scale property to 1.0 by default.
@@ -48,6 +87,7 @@ public:
 	*/
 	Entity(void) {
 		s = {1.0, 1.0, 1.0};
+		parent = NULL;
 	}
 
 
@@ -71,113 +111,130 @@ public:
 
 		Output		: Transformed Model Matrix. 	
 	*/
-	void Transformation(float t1, float t2, float t3) {
-		Quat Qx = Quat::makeXRotation(r[0] * t1);
-		Quat Qy = Quat::makeYRotation(r[1] * t2);
-		Quat Qz = Quat::makeZRotation(r[2] * t3);
+	void Transformation() {
+		Quat Qx = Quat::makeXRotation(r[0]);
+		Quat Qy = Quat::makeYRotation(r[1]);
+		Quat Qz = Quat::makeZRotation(r[2]);
 		Matrix4 rotation = quatToMatrix(Qx * Qy * Qz);
-		modelMatrix = modelMatrix.makeTranslation(t) * rotation * modelMatrix.makeScale(s);
+		
+		if (parent != NULL)
+		{
+			modelMatrix = parent->modelMatrix * modelMatrix.makeTranslation(t) * rotation * modelMatrix.makeScale(s);
+		}else{
+			modelMatrix = modelMatrix.makeTranslation(t) * rotation * modelMatrix.makeScale(s);
+		}
+		
+
+	}
+
+	void Draw(Matrix4 &eyeInverse, Matrix4 &projectionMatrix, GLuint positionAttribute, GLuint normalAttribute, GLuint modelViewMatrixUniformLocation, GLuint normalMatrixUniformLocation) {
+		Transformation();
+
+		
+		Matrix4 modelViewMatrix = eyeInverse * modelMatrix;
+
+		GLfloat glmatrix[16];
+		modelViewMatrix.writeToColumnMajorMatrix(glmatrix);
+		glUniformMatrix4fv(modelViewMatrixUniformLocation, 1, false, glmatrix);
+
+		GLfloat glmatrixProjection[16];
+		projectionMatrix.writeToColumnMajorMatrix(glmatrixProjection);
+		glUniformMatrix4fv(projectionMatrixUniformLocation, 1, false, glmatrixProjection);
+
+		Matrix4 normalMatrix;
+		normalMatrix = transpose(inv(modelMatrix));
+
+		GLfloat glmatrixNormal[16];
+		normalMatrix.writeToColumnMajorMatrix(glmatrixNormal);
+		glUniformMatrix4fv(normalMatrixUniformLocation, 1, false, glmatrixNormal);
+
+		geometry.Draw();
 	}
 };
+
+void makeCube(float size) {
+	
+	int ibLen, vbLen;
+
+	getCubeVbIbLen(vbLen, ibLen);
+
+	std::vector<VertexPN> vtx(vbLen);
+	std::vector<unsigned short> idx(ibLen);
+
+	makeCube(size, vtx.begin(), idx.begin());
+
+	glGenBuffers(1, &VertexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &IndexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
+	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
+
+
+	
+}
+
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
+	
+
 	glUseProgram(program);
 	float time = glutGet(GLUT_ELAPSED_TIME);
-	float t1 = -((float)time / 1000.0f);
-
-
-
-	/*	Plot first Cube.	*/
-	
-	Cvec3 tr = { 0.0, 0.0, 0.0 };
-	Cvec3 ro = { 0.0, 30.0, 0.0 };
-	Cvec3 sc = { 1.0, 1.0, 1.0 };
-	Entity Obj1(tr, ro, sc);
-	Obj1.Transformation(1.0, t1, 1.0);
+	float t1 = ((float)time / 1000.0f);
 
 	Matrix4 eyeMatrix;
 	eyeMatrix = eyeMatrix.makeTranslation(Cvec3(0.0, 0.0, 35.0));
-
-	Obj1.modelMatrix = inv(eyeMatrix) * Obj1.modelMatrix;
-
-	GLfloat glmatrix[16];
-	Obj1.modelMatrix.writeToColumnMajorMatrix(glmatrix);
-	glUniformMatrix4fv(modelViewMatrixUniformLocation, 1, false, glmatrix);
-
 	Matrix4 projectionMatrix;
-	projectionMatrix = projectionMatrix.makeProjection(45.0, 1.0, - 0.1, -100.0);
+	projectionMatrix = projectionMatrix.makeProjection(45.0, 1.0, -0.1, -100.0);
+	Matrix4 eyeInverse = inv(eyeMatrix);
 
-	GLfloat glmatrixProjection[16];
-	projectionMatrix.writeToColumnMajorMatrix(glmatrixProjection);
-	glUniformMatrix4fv(projectionMatrixUniformLocation, 1, false, glmatrixProjection);
 	
-	Matrix4 normalMatrix;
-	normalMatrix = transpose(inv(Obj1.modelMatrix));
-
-	GLfloat glmatrixNormal[16];
-	normalMatrix.writeToColumnMajorMatrix(glmatrixNormal);
-	glUniformMatrix4fv(normalMatrixUniformLocation, 1, false, glmatrixNormal);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertPostionVBO);
-	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(positionAttribute);
-
-	glBindBuffer(GL_ARRAY_BUFFER, normalPositionVBO);
-	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(normalAttribute);
-
-	glDrawArrays(GL_TRIANGLES, 0, 36); 
 
 
-
-	/*	Plot child cube		*/
+	Cvec3 tr = { 0.0, 0.0, 0.0 };
+	Cvec3 ro = { 0.0, 30.0 * t1, 0.0 };
+	Cvec3 sc = { 1.0, 1.0, 1.0 };
+	Entity Obj1(tr, ro, sc);
+	Obj1.parent = NULL;
+	//Obj1.geometry.numIndices = 8;
+	//Obj1.geometry.indexBO = IndexBO;
+	//Obj1.geometry.VertexBO = VertexBO;
 	
+	Obj1.Draw(eyeInverse, projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation );
+
 	tr = { 3.5, 3.5, 3.5 };
-	ro = { 0.0, 30.0, 30.0 };
+	ro = { 0.0, 30.0 * t1, 30.0 * t1 };
 	sc = { 2.0, 2.0, 2.0 };
 	Entity Obj2(tr, ro, sc);
 	Obj2.parent = &Obj1;
-	Obj2.Transformation(1.0, 1.0, t1);
-	Obj2.modelMatrix = Obj2.parent->modelMatrix * Obj2.modelMatrix;
-
-	Obj2.modelMatrix.writeToColumnMajorMatrix(glmatrix);
-	glUniformMatrix4fv(modelViewMatrixUniformLocation, 1, false, glmatrix);
-
-	normalMatrix = transpose(inv(Obj2.modelMatrix));
-	normalMatrix.writeToColumnMajorMatrix(glmatrixNormal);
-	glUniformMatrix4fv(normalMatrixUniformLocation, 1, false, glmatrixNormal);
-
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-
-	/*	Plot third Cube.	*/
+	//Obj2.geometry.numIndices = 8;
+	Obj2.Draw(inv(eyeMatrix), projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
 
 	tr = { -5.0, -5.0, -1.5 };
-	ro = { 0.0, 45.0, 60.0 };
-	sc = { 3.0, 3.0, 3.0 };
+	ro = { 0.0, 45.0 * t1, 60.0 * t1 };
+	sc = { (3.0 + sin(time / 200)) * 0.5, (3.0 + sin(time / 200)) * 0.5, (3.0 + sin(time / 200)) * 0.5 };
 	Entity Obj3(tr, ro, sc);
 	Obj3.parent = &Obj2;
-	Obj3.Transformation(1.0, 1.0, t1);
-	Obj3.modelMatrix = Obj3.parent->modelMatrix * Obj3.modelMatrix;
+	//Obj3.geometry.numIndices = 8;
+	Obj3.Draw(inv(eyeMatrix), projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
 
-	Obj3.modelMatrix.writeToColumnMajorMatrix(glmatrix);
-	glUniformMatrix4fv(modelViewMatrixUniformLocation, 1, false, glmatrix);
 
-	normalMatrix = transpose(inv(Obj3.modelMatrix));
-	normalMatrix.writeToColumnMajorMatrix(glmatrixNormal);
-	glUniformMatrix4fv(normalMatrixUniformLocation, 1, false, glmatrixNormal);
 
-	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	
-	/*Disabling Attributes.*/
 	
+
+
+
+	
+	/*Disabling Attributes.	*/	
 	glDisableVertexAttribArray(positionAttribute);
 	glDisableVertexAttribArray(normalAttribute);
+
 	
 	glutSwapBuffers();
 }
@@ -191,6 +248,8 @@ void init() {
 	glCullFace(GL_BACK);
 	glReadBuffer(GL_BACK);
 	readAndCompileShader(program, "Vertex.glsl", "Fragment.glsl");
+
+
 	
 
 	glUseProgram(program);
@@ -200,114 +259,9 @@ void init() {
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	normalMatrixUniformLocation = glGetUniformLocation(program, "normalMatrix");
 
+	makeCube(2);
 
-
-	glGenBuffers(1, &vertPostionVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, vertPostionVBO);
-	GLfloat cubeVerts[108] = {
-		-1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-
-		1.0f, 1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-
-		1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-
-		1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-
-		1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-
-		-1.0f, 1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f
-	};
-	glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), cubeVerts, GL_STATIC_DRAW);
-
-
-	glGenBuffers(1, &normalPositionVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, normalPositionVBO);
-	GLfloat cubeNormals[108] = {
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		
-		0.0f, 0.0f,-1.0f,
-		0.0f, 0.0f,-1.0f,
-		0.0f, 0.0f,-1.0f,
-		
-		0.0f,-1.0f,0.0f,
-		0.0f,-1.0f,0.0f,
-		0.0f,-1.0f,0.0f,
-		
-		0.0f, 0.0f,-1.0f,
-		0.0f, 0.0f,-1.0f,
-		0.0f, 0.0f,-1.0f,
-		
-		-1.0f, 0.0f,0.0f,
-		-1.0f, 0.0f,0.0f,
-		-1.0f, 0.0f,0.0f,
-		
-		0.0f,-1.0f, 0.0f,
-		0.0f,-1.0f, 0.0f,
-		0.0f,-1.0f,0.0f,
-		
-		0.0f, 0.0f, 1.0f,
-		0.0f,0.0f, 1.0f,
-		0.0f,0.0f, 1.0f,
-		
-		1.0f, 0.0f, 0.0f,
-		1.0f,0.0f,0.0f,
-		1.0f, 0.0f,0.0f,
-		
-		1.0f,0.0f,0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f,0.0f, 0.0f,
-		
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f,0.0f,
-		0.0f, 1.0f,0.0f,
-		
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f,0.0f, 1.0f
-	};
-	glBufferData(GL_ARRAY_BUFFER, 108 * sizeof(GLfloat), cubeNormals, GL_STATIC_DRAW);
+	
 }
 
 void reshape(int w, int h) {
