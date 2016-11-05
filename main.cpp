@@ -25,13 +25,13 @@ GLuint projectionMatrixUniformLocation;
 GLuint normalPositionVBO;
 GLuint normalAttribute;
 GLuint normalMatrixUniformLocation;
-
-//Now the variables for the second half i.e. automization
 GLuint VertexBO;
 GLuint IndexBO;
 
 
-
+/*
+	This structure holds the Vertex data : vertices and normals position of the Object.
+*/
 struct VertexPN {
 	Cvec3f p;
 	Cvec3f n;
@@ -49,9 +49,8 @@ struct VertexPN {
 
 
 struct Geometry{
-	//GLuint VertexBO;
-	//GLuint indexBO;
-	//int numIndices;
+
+	int numIndices;
 
 	void Draw() {
 		glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
@@ -62,7 +61,7 @@ struct Geometry{
 		glEnableVertexAttribArray(normalAttribute);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
-		glDrawElements(GL_TRIANGLES, sizeof(VertexPN) * 8, GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(VertexPN) * numIndices, GL_UNSIGNED_SHORT, 0);
 	}
 };
 
@@ -129,8 +128,7 @@ public:
 
 	void Draw(Matrix4 &eyeInverse, Matrix4 &projectionMatrix, GLuint positionAttribute, GLuint normalAttribute, GLuint modelViewMatrixUniformLocation, GLuint normalMatrixUniformLocation) {
 		Transformation();
-
-		
+	
 		Matrix4 modelViewMatrix = eyeInverse * modelMatrix;
 
 		GLfloat glmatrix[16];
@@ -152,8 +150,16 @@ public:
 	}
 };
 
-void makeCube(float size) {
+
+
+/*	This function creates the 3D cube.
 	
+	Arguments	: This function takes the cube size as argument.
+
+	Output		: The output of the function is 3D cube.
+
+*/
+void makeCube(float size) {
 	int ibLen, vbLen;
 
 	getCubeVbIbLen(vbLen, ibLen);
@@ -170,17 +176,67 @@ void makeCube(float size) {
 	glGenBuffers(1, &IndexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
-
-
-	
 }
 
+
+
+/*	This function creates the 3D Sphere.
+
+Arguments	: This function takes the sphere radius as argument.
+
+Output		: The output of the function is 3D Sphere.
+
+*/
+void makeSphere(float radius) {
+	int ibLen, vbLen, slices = 10, stacks = 10;
+
+	getSphereVbIbLen(slices, stacks, vbLen, ibLen);
+
+	std::vector<VertexPN> vtx(vbLen);
+	std::vector<unsigned short> idx(ibLen);
+
+	makeSphere(radius, slices, stacks, vtx.begin(), idx.begin());
+
+	glGenBuffers(1, &VertexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &IndexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
+	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
+}
+
+
+
+/*	This function creates the 3D Plane.
+
+Arguments	: This function takes the Plane size as argument.
+
+Output		: The output of the function is 3D Plane.
+
+*/
+void makePlane(float size) {
+	int ibLen, vbLen;
+
+	getPlaneVbIbLen(vbLen, ibLen);
+
+	std::vector<VertexPN> vtx(vbLen);
+	std::vector<unsigned short> idx(ibLen);
+
+	makePlane(size, vtx.begin(), idx.begin());
+
+	glGenBuffers(1, &VertexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &IndexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
+	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
+}
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
-
-	
 
 	glUseProgram(program);
 	float time = glutGet(GLUT_ELAPSED_TIME);
@@ -192,43 +248,35 @@ void display(void) {
 	projectionMatrix = projectionMatrix.makeProjection(45.0, 1.0, -0.1, -100.0);
 	Matrix4 eyeInverse = inv(eyeMatrix);
 
-	
-
 
 	Cvec3 tr = { 0.0, 0.0, 0.0 };
 	Cvec3 ro = { 0.0, 30.0 * t1, 0.0 };
 	Cvec3 sc = { 1.0, 1.0, 1.0 };
 	Entity Obj1(tr, ro, sc);
 	Obj1.parent = NULL;
-	//Obj1.geometry.numIndices = 8;
-	//Obj1.geometry.indexBO = IndexBO;
-	//Obj1.geometry.VertexBO = VertexBO;
-	
+	Obj1.geometry.numIndices = 100;
+	makeSphere(2);
 	Obj1.Draw(eyeInverse, projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation );
+
 
 	tr = { 3.5, 3.5, 3.5 };
 	ro = { 0.0, 30.0 * t1, 30.0 * t1 };
 	sc = { 2.0, 2.0, 2.0 };
 	Entity Obj2(tr, ro, sc);
 	Obj2.parent = &Obj1;
-	//Obj2.geometry.numIndices = 8;
+	Obj2.geometry.numIndices = 8;
+	makeCube(2);
 	Obj2.Draw(inv(eyeMatrix), projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
+
 
 	tr = { -5.0, -5.0, -1.5 };
 	ro = { 0.0, 45.0 * t1, 60.0 * t1 };
 	sc = { (3.0 + sin(time / 200)) * 0.5, (3.0 + sin(time / 200)) * 0.5, (3.0 + sin(time / 200)) * 0.5 };
 	Entity Obj3(tr, ro, sc);
 	Obj3.parent = &Obj2;
-	//Obj3.geometry.numIndices = 8;
+	Obj3.geometry.numIndices = 4;
+	makePlane(2);
 	Obj3.Draw(inv(eyeMatrix), projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
-
-
-
-
-	
-	
-
-
 
 	
 	/*Disabling Attributes.	*/	
@@ -250,17 +298,12 @@ void init() {
 	readAndCompileShader(program, "Vertex.glsl", "Fragment.glsl");
 
 
-	
-
 	glUseProgram(program);
 	positionAttribute = glGetAttribLocation(program, "position");
 	normalAttribute = glGetAttribLocation(program, "normal");
 	modelViewMatrixUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	normalMatrixUniformLocation = glGetUniformLocation(program, "normalMatrix");
-
-	makeCube(2);
-
 	
 }
 

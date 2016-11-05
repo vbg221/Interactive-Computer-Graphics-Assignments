@@ -1,7 +1,25 @@
 ﻿  main.cpp
-d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\main.cpp(186): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\main.cpp(223): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
 d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\geometrymaker.h(60): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\main.cpp(164): note: see reference to function template instantiation 'void makeCube<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,VtxOutIter,IdxOutIter)' being compiled
+          with
+          [
+              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,
+              IdxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>
+          ]
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\geometrymaker.h(151): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\main.cpp(184): note: see reference to function template instantiation 'void makeSphere<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,int,int,VtxOutIter,IdxOutIter)' being compiled
+          with
+          [
+              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,
+              IdxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>
+          ]
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\geometrymaker.h(152): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\geometrymaker.h(153): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\geometrymaker.h(156): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\geometrymaker.h(164): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\geometrymaker.h(40): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  d:\nyu\sem 1\inteactive computer graphics\my program\assignment 2\template\windows\main.cpp(205): note: see reference to function template instantiation 'void makePlane<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,VtxOutIter,IdxOutIter)' being compiled
           with
           [
               VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,
