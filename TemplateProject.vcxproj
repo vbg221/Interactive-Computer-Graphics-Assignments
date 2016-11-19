@@ -88,6 +88,7 @@
     <ClInclude Include="glsupport.h" />
     <ClInclude Include="matrix4.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glsupport.cpp" />

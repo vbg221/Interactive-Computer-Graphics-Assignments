@@ -6,6 +6,8 @@
 
 */
 
+#define TINYOBJLOADER_IMPLEMENTATION
+
 #include "glsupport.h"
 #include "glut.h"
 #include "iostream"
@@ -14,6 +16,7 @@
 #include "math.h"
 #include "vector"
 #include "geometrymaker.h"
+#include "tiny_obj_loader.h"
 
 using namespace std;
 
@@ -27,6 +30,8 @@ GLuint normalAttribute;
 GLuint normalMatrixUniformLocation;
 GLuint VertexBO;
 GLuint IndexBO;
+GLuint color;
+GLuint lightDirection;
 
 
 /*
@@ -234,11 +239,100 @@ void makePlane(float size) {
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 }
 
+void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices, std::vector<unsigned short> &outIndices) {
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string err;
+
+	
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
+	glEnableVertexAttribArray(positionAttribute);
+
+	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
+	glEnableVertexAttribArray(normalAttribute);
+	
+	
+	
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, fileName.c_str(), NULL, true);
+	
+	
+
+
+	if (ret){
+		for (int i = 0; i < attrib.vertices.size(); i += 3) {
+			//				unsigned int vertexOffset = shapes[i].mesh.indices[j].vertex_index * 3;
+			//				unsigned int normalOffset = shapes[i].mesh.indices[j].normal_index * 3;
+			//				unsigned int textOffset = shapes[i].mesh.indices[j].texcoord_index * 2;
+			VertexPN v;
+			v.p[0] = attrib.vertices[i];
+			v.p[1] = attrib.vertices[i + 1];
+			v.p[2] = attrib.vertices[i + 2];
+			v.n[0] = attrib.normals[i];
+			v.n[1] = attrib.normals[i + 1];
+			v.n[2] = attrib.normals[i + 2];
+			outVertices.push_back(v);
+
+//			cout << "The vartices " << i << " has been loaded : " << v.p[0] << v.p[1] << v.p[2] << std::endl;
+
+		}
+		
+		for (int i = 0; i < shapes.size(); i++) {
+			for (int j = 0; j < shapes[i].mesh.indices.size(); j++) {
+				outIndices.push_back(shapes[i].mesh.indices[j].vertex_index);
+
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes[i].mesh.indices[j].vertex_index);
+				glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
+			}
+
+			
+		}
+		
+
+		cout << "Loaded";
+
+		
+	}
+	else {
+		std::cout << err << std::endl;
+		assert(false);
+	}
+
+	
+
+}
+
+
+void make3DObject() {
+	std::vector<VertexPN> vtx;
+	std::vector<unsigned short> idx;
+
+
+
+
+	loadObjFile("lucy.obj", vtx, idx);
+
+	glGenBuffers(1, &VertexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &IndexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
+	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
+}
+
+
+
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(program);
+
+//	glUniform3f(color, 1.0, 1.2, 0.0);
+//	glUniform3f(lightDirection, -0.5774, 0.5774, 0.5774);
+
 	float time = glutGet(GLUT_ELAPSED_TIME);
 	float t1 = ((float)time / 1000.0f);
 
@@ -248,37 +342,42 @@ void display(void) {
 	projectionMatrix = projectionMatrix.makeProjection(45.0, 1.0, -0.1, -100.0);
 	Matrix4 eyeInverse = inv(eyeMatrix);
 
+	
+//	std::vector<VertexPN> vtx;
+//	std::vector<unsigned short> idx;
 
-	Cvec3 tr = { 0.0, 0.0, 0.0 };
-	Cvec3 ro = { 0.0, 30.0 * t1, 0.0 };
-	Cvec3 sc = { 1.0, 1.0, 1.0 };
-	Entity Obj1(tr, ro, sc);
-	Obj1.parent = NULL;
-	Obj1.geometry.numIndices = 100;
-	makeSphere(2);
-	Obj1.Draw(eyeInverse, projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation );
+/*
+	glGenBuffers(1, &VertexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
 
-
-	tr = { 3.5, 3.5, 3.5 };
-	ro = { 0.0, 30.0 * t1, 30.0 * t1 };
-	sc = { 2.0, 2.0, 2.0 };
-	Entity Obj2(tr, ro, sc);
-	Obj2.parent = &Obj1;
-	Obj2.geometry.numIndices = 8;
-	makeCube(2);
-	Obj2.Draw(inv(eyeMatrix), projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
+	glGenBuffers(1, &IndexBO);
+	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
+	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
+	*/
 
 
-	tr = { -5.0, -5.0, -1.5 };
-	ro = { 0.0, 45.0 * t1, 60.0 * t1 };
-	sc = { (3.0 + sin(time / 200)) * 0.5, (3.0 + sin(time / 200)) * 0.5, (3.0 + sin(time / 200)) * 0.5 };
-	Entity Obj3(tr, ro, sc);
-	Obj3.parent = &Obj2;
-	Obj3.geometry.numIndices = 4;
-	makePlane(2);
-	Obj3.Draw(inv(eyeMatrix), projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
+	glEnableVertexAttribArray(positionAttribute);
 
 	
+	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
+	glEnableVertexAttribArray(normalAttribute);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
+	glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
+
+	Cvec3 tr = { 0.0, -7.0, 0.0 };
+	Cvec3 ro = { 0.0, 0.0, 0.0 };
+	Cvec3 sc = { 100.0, 100.0, 100.0 };
+	Entity Obj1(tr, ro, sc);
+	Obj1.parent = NULL;
+	Obj1.geometry.numIndices = 40001;
+	make3DObject();
+	Obj1.Draw(eyeInverse, projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
+	
+
 	/*Disabling Attributes.	*/	
 	glDisableVertexAttribArray(positionAttribute);
 	glDisableVertexAttribArray(normalAttribute);
@@ -304,6 +403,11 @@ void init() {
 	modelViewMatrixUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	normalMatrixUniformLocation = glGetUniformLocation(program, "normalMatrix");
+//	color = glGetUniformLocation(program, "uColor");
+//	lightDirection = glGetUniformLocation(program, "lightDirection");
+
+	
+
 	
 }
 
@@ -326,6 +430,11 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutIdleFunc(idle);
+
+	
+
+	
+
 
 	init();
 	glutMainLoop();
