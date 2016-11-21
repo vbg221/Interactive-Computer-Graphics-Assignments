@@ -31,8 +31,9 @@ GLuint normalMatrixUniformLocation;
 GLuint VertexBO;
 GLuint IndexBO;
 GLuint color;
-GLuint lightDirection;
-
+GLuint lightDirection[2];
+GLuint lightColor[2];
+GLuint specularLightColor[2];
 
 /*
 	This structure holds the Vertex data : vertices and normals position of the Object.
@@ -53,6 +54,14 @@ struct VertexPN {
 
 
 
+struct Light {
+	Cvec3 lightColor;
+	Cvec3 lightDirection;
+	Cvec3 specularLightDirection;
+};
+Light lights[2];
+
+
 struct Geometry{
 
 	int numIndices;
@@ -67,6 +76,9 @@ struct Geometry{
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
 		glDrawElements(GL_TRIANGLES, sizeof(VertexPN) * numIndices, GL_UNSIGNED_SHORT, 0);
+
+		glDisableVertexAttribArray(positionAttribute);
+		glDisableVertexAttribArray(normalAttribute);
 	}
 };
 
@@ -106,7 +118,6 @@ public:
 		r = ro;
 		s = sc;
 	}
-
 
 
 	/*	This function applies transformation to the object. (Independent translation, rotation and scaling)
@@ -152,6 +163,9 @@ public:
 		glUniformMatrix4fv(normalMatrixUniformLocation, 1, false, glmatrixNormal);
 
 		geometry.Draw();
+
+		glClearBufferData(GL_ARRAY_BUFFER, GL_FLOAT, NULL, GL_FLOAT, &VertexBO);
+		glClearBufferData(GL_ARRAY_BUFFER, GL_UNSIGNED_SHORT, NULL, GL_UNSIGNED_SHORT, &IndexBO);
 	}
 };
 
@@ -174,11 +188,11 @@ void makeCube(float size) {
 
 	makeCube(size, vtx.begin(), idx.begin());
 
-	glGenBuffers(1, &VertexBO);
+	//glGenBuffers(1, &VertexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
 	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &IndexBO);
+	//glGenBuffers(1, &IndexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 }
@@ -202,11 +216,11 @@ void makeSphere(float radius) {
 
 	makeSphere(radius, slices, stacks, vtx.begin(), idx.begin());
 
-	glGenBuffers(1, &VertexBO);
+	//glGenBuffers(1, &VertexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
 	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &IndexBO);
+	//glGenBuffers(1, &IndexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 }
@@ -230,11 +244,11 @@ void makePlane(float size) {
 
 	makePlane(size, vtx.begin(), idx.begin());
 
-	glGenBuffers(1, &VertexBO);
+	//glGenBuffers(1, &VertexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
 	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &IndexBO);
+	//glGenBuffers(1, &IndexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 }
@@ -246,11 +260,11 @@ void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices
 	std::string err;
 
 	
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+	//glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
 	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
 	glEnableVertexAttribArray(positionAttribute);
 
-	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
+	//glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
 	glEnableVertexAttribArray(normalAttribute);
 	
 	
@@ -274,7 +288,8 @@ void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices
 			v.n[2] = attrib.normals[i + 2];
 			outVertices.push_back(v);
 
-//			cout << "The vartices " << i << " has been loaded : " << v.p[0] << v.p[1] << v.p[2] << std::endl;
+//			cout << "The vertice " << i << " has been loaded : " << v.p[0] << v.p[1] << v.p[2] << std::endl;
+//			cout << "The normal " << i << " has been loaded : " << v.p[0] << v.p[1] << v.p[2] << std::endl;
 
 		}
 		
@@ -284,6 +299,8 @@ void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices
 
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes[i].mesh.indices[j].vertex_index);
 				glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
+//				glDisableVertexAttribArray(positionAttribute);
+//				glDisableVertexAttribArray(normalAttribute);
 			}
 
 			
@@ -311,13 +328,13 @@ void make3DObject() {
 
 
 
-	loadObjFile("lucy.obj", vtx, idx);
+	loadObjFile("Monk_Giveaway/Monk_Giveaway.obj", vtx, idx);
 
-	glGenBuffers(1, &VertexBO);
+	//glGenBuffers(1, &VertexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
 	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &IndexBO);
+	//glGenBuffers(1, &IndexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 }
@@ -330,11 +347,9 @@ void display(void) {
 
 	glUseProgram(program);
 
-//	glUniform3f(color, 1.0, 1.2, 0.0);
-//	glUniform3f(lightDirection, -0.5774, 0.5774, 0.5774);
-
 	float time = glutGet(GLUT_ELAPSED_TIME);
 	float t1 = ((float)time / 1000.0f);
+
 
 	Matrix4 eyeMatrix;
 	eyeMatrix = eyeMatrix.makeTranslation(Cvec3(0.0, 0.0, 35.0));
@@ -342,38 +357,27 @@ void display(void) {
 	projectionMatrix = projectionMatrix.makeProjection(45.0, 1.0, -0.1, -100.0);
 	Matrix4 eyeInverse = inv(eyeMatrix);
 
-	
-//	std::vector<VertexPN> vtx;
-//	std::vector<unsigned short> idx;
 
-/*
-	glGenBuffers(1, &VertexBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &IndexBO);
-	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
-	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
-	*/
-
-
-	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
-	glEnableVertexAttribArray(positionAttribute);
 
 	
-	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
-	glEnableVertexAttribArray(normalAttribute);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
-	glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
+//	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+//	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
+//	glEnableVertexAttribArray(positionAttribute);
 
-	Cvec3 tr = { 0.0, -7.0, 0.0 };
-	Cvec3 ro = { 0.0, 0.0, 0.0 };
-	Cvec3 sc = { 100.0, 100.0, 100.0 };
+	
+//	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
+//	glEnableVertexAttribArray(normalAttribute);
+
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
+//	glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
+
+	Cvec3 tr = { 0.0, -8.0, 0.0 };
+	Cvec3 ro = { 0.0, 45.0 * t1, 0.0 };
+	Cvec3 sc = { 0.1, 0.1, 0.1 };
 	Entity Obj1(tr, ro, sc);
 	Obj1.parent = NULL;
-	Obj1.geometry.numIndices = 40001;
+	Obj1.geometry.numIndices = 17589;
 	make3DObject();
 	Obj1.Draw(eyeInverse, projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
 	
@@ -403,11 +407,53 @@ void init() {
 	modelViewMatrixUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	normalMatrixUniformLocation = glGetUniformLocation(program, "normalMatrix");
-//	color = glGetUniformLocation(program, "uColor");
-//	lightDirection = glGetUniformLocation(program, "lightDirection");
-
+	color = glGetUniformLocation(program, "uColor");
 	
 
+	lights[0].lightColor = glGetUniformLocation(program, "lights[0].lightColor");
+	lights[0].lightDirection = glGetUniformLocation(program, "lights[0].lightDirection");
+	lights[0].specularLightDirection = glGetUniformLocation(program, "lights[0].specularLightColor");
+
+	lights[1].lightColor = glGetUniformLocation(program, "lights[1].lightColor");
+	lights[1].lightDirection = glGetUniformLocation(program, "lights[1].lightDirection");
+	lights[1].specularLightDirection = glGetUniformLocation(program, "lights[1].specularLightColor");
+
+/*
+	lights[0].lightColor = Cvec3(0.2, 0.0, 1.0);
+	lights[0].lightDirection = Cvec3(-0.5447, 0.5774, 0.5774);
+	lights[0].specularLightDirection = Cvec3(1.0, 1.0, 1.0);
+
+	lights[1].lightColor = Cvec3(0.1, 0.1, 1.0);
+	lights[1].lightDirection = Cvec3(0.5447, 0.5774, 0.5774);
+	lights[1].specularLightDirection = Cvec3(1.0, 1.0, 1.0);
+	*/
+	
+
+
+	lightColor[0] = glGetUniformLocation(program, "lights[0].lightColor");
+	lightDirection[0] = glGetUniformLocation(program, "lights[0].lightDirection");
+	specularLightColor[0] = glGetUniformLocation(program, "lights[0].specularLightColor");
+	glUniform3f(lightDirection[0], -0.5447, 0.5774, 0.5774);
+	glUniform3f(lightColor[0], 1.0, 0.0, 1.0);
+	glUniform3f(specularLightColor[0], 1.0, 1.0, 1.0);
+	/*
+	cout << lightColor[0];
+*/
+	lightColor[1] = glGetUniformLocation(program, "lights[1].lightColor");
+	lightDirection[1] = glGetUniformLocation(program, "lights[1].lightDirection");
+	specularLightColor[1] = glGetUniformLocation(program, "lights[1].specularLightColor");
+	glUniform3f(lightDirection[1], 0.5447, 0.5774, 0.5774);
+	glUniform3f(lightColor[1], 1.0, 1.0, 0.0);
+	glUniform3f(specularLightColor[1], 1.0, 1.0, 1.0);
+/*
+	cout << lightColor[1];
+	*/
+	//	glUniform3f(color, 1.0, 1.2, 0.0);
+	//	glUniform3f(lightDirection2, 0.5774, 0.5774, 0.5774);
+	
+
+	glGenBuffers(1, &VertexBO);
+	glGenBuffers(1, &IndexBO);
 	
 }
 
