@@ -34,6 +34,11 @@ GLuint color;
 GLuint lightDirection[2];
 GLuint lightColor[2];
 GLuint specularLightColor[2];
+GLuint texCoordAttribute;
+GLuint diffuseTexture;
+GLuint diffuseTextureUniformLocation;
+
+
 
 /*
 	This structure holds the Vertex data : vertices and normals position of the Object.
@@ -41,6 +46,7 @@ GLuint specularLightColor[2];
 struct VertexPN {
 	Cvec3f p;
 	Cvec3f n;
+	Cvec2f t;
 
 	VertexPN() {}
 	VertexPN(float x, float y, float z, float nx, float ny, float nz) : p(x,y,z), n(nx, ny, nz) {}
@@ -48,6 +54,7 @@ struct VertexPN {
 	VertexPN& operator = (const GenericVertex& v) {
 		p = v.pos;
 		n = v.normal;
+		t = v.tex;
 		return *this;
 	}
 };
@@ -73,6 +80,10 @@ struct Geometry{
 
 		glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
 		glEnableVertexAttribArray(normalAttribute);
+
+		glEnableVertexAttribArray(texCoordAttribute);
+		glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, t));
+		glEnableVertexAttribArray(texCoordAttribute);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
 		glDrawElements(GL_TRIANGLES, sizeof(VertexPN) * numIndices, GL_UNSIGNED_SHORT, 0);
@@ -244,11 +255,11 @@ void makePlane(float size) {
 
 	makePlane(size, vtx.begin(), idx.begin());
 
-	//glGenBuffers(1, &VertexBO);
+	
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
 	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
 
-	//glGenBuffers(1, &IndexBO);
+	
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 }
@@ -260,12 +271,14 @@ void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices
 	std::string err;
 
 	
-	//glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+
 	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
 	glEnableVertexAttribArray(positionAttribute);
-
-	//glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
 	glEnableVertexAttribArray(normalAttribute);
+	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
+	glEnableVertexAttribArray(texCoordAttribute);
+	glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, t));
+	glEnableVertexAttribArray(texCoordAttribute);
 	
 	
 	
@@ -275,38 +288,51 @@ void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices
 
 
 	if (ret){
-		for (int i = 0; i < attrib.vertices.size(); i += 3) {
-			//				unsigned int vertexOffset = shapes[i].mesh.indices[j].vertex_index * 3;
-			//				unsigned int normalOffset = shapes[i].mesh.indices[j].normal_index * 3;
-			//				unsigned int textOffset = shapes[i].mesh.indices[j].texcoord_index * 2;
-			VertexPN v;
-			v.p[0] = attrib.vertices[i];
-			v.p[1] = attrib.vertices[i + 1];
-			v.p[2] = attrib.vertices[i + 2];
-			v.n[0] = attrib.normals[i];
-			v.n[1] = attrib.normals[i + 1];
-			v.n[2] = attrib.normals[i + 2];
-			outVertices.push_back(v);
-
-//			cout << "The vertice " << i << " has been loaded : " << v.p[0] << v.p[1] << v.p[2] << std::endl;
-//			cout << "The normal " << i << " has been loaded : " << v.p[0] << v.p[1] << v.p[2] << std::endl;
-
-		}
-		
 		for (int i = 0; i < shapes.size(); i++) {
 			for (int j = 0; j < shapes[i].mesh.indices.size(); j++) {
-				outIndices.push_back(shapes[i].mesh.indices[j].vertex_index);
 
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes[i].mesh.indices[j].vertex_index);
-				glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
-//				glDisableVertexAttribArray(positionAttribute);
-//				glDisableVertexAttribArray(normalAttribute);
+				unsigned int vertexOffset = shapes[i].mesh.indices[j].vertex_index * 3;
+				unsigned int normalOffset = shapes[i].mesh.indices[j].normal_index * 3;
+				unsigned int textOffset = shapes[i].mesh.indices[j].texcoord_index * 2;
+				VertexPN v;
+				v.p[0] = attrib.vertices[i];
+				v.p[1] = attrib.vertices[i + 1];
+				v.p[2] = attrib.vertices[i + 2];
+
+				v.t[0] = attrib.texcoords[textOffset];
+				v.t[1] = 1.0 - attrib.texcoords[textOffset + 1];
+
+				v.n[0] = attrib.normals[i];
+				v.n[1] = attrib.normals[i + 1];
+				v.n[2] = attrib.normals[i + 2];
+				
+				outVertices.push_back(v);
+				outIndices.push_back(outVertices.size() - 1);
+
+/*
+				glGenBuffers(1, &VertexBO);
+				glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(VertexPN) * vtx.size(), vtx.data(), GL_STATIC_DRAW);
+				glGenBuffers(1, &IndexBO);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
+				glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * idx.size(), idx.data(), GL_STATIC_DRAW);
+				*/
+
+//				cout << "The vertice " << j << " has been loaded : " << v.p[0] << v.p[1] << v.p[2] << std::endl;
+//				cout << "The normal " << j << " has been loaded : " << v.n[0] << v.n[1] << v.n[2] << std::endl;
+//				cout << "The Texture" << j << "has been loaded : " << v.t[0] << v.t[1] << endl;
+
+//				glActiveTexture(GL_TEXTURE0);
+//				glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+
+//				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes[i].mesh.indices[j].vertex_index);
+//				glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
+
 			}
-
-			
 		}
-		
 
+		
+		
 		cout << "Loaded";
 
 		
@@ -326,9 +352,9 @@ void make3DObject() {
 	std::vector<unsigned short> idx;
 
 
+	// Monk_Giveaway/Monk_Giveaway_Fixed.obj
 
-
-	loadObjFile("Monk_Giveaway/Monk_Giveaway.obj", vtx, idx);
+	loadObjFile("Monk_Giveaway/Monk_Giveaway_Fixed.obj", vtx, idx);
 
 	//glGenBuffers(1, &VertexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
@@ -337,6 +363,18 @@ void make3DObject() {
 	//glGenBuffers(1, &IndexBO);
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
+
+	glUniform1i(diffuseTextureUniformLocation, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+
+
+	glEnableVertexAttribArray(texCoordAttribute);
+	glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, t));
+
 }
 
 
@@ -358,26 +396,22 @@ void display(void) {
 	Matrix4 eyeInverse = inv(eyeMatrix);
 
 
-
-	
-
-//	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-//	glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
-//	glEnableVertexAttribArray(positionAttribute);
-
-	
-//	glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
-//	glEnableVertexAttribArray(normalAttribute);
-
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
-//	glDrawElements(GL_TRIANGLES, sizeof(VertexPN), GL_UNSIGNED_SHORT, 0);
-
 	Cvec3 tr = { 0.0, -8.0, 0.0 };
 	Cvec3 ro = { 0.0, 45.0 * t1, 0.0 };
-	Cvec3 sc = { 0.1, 0.1, 0.1 };
+	Cvec3 sc = { 1.0, 1.0, 1.0 };
+	Entity ObjBase(tr, ro, sc);
+	ObjBase.parent = NULL;
+	ObjBase.geometry.numIndices = 4;
+	makePlane(15);
+	ObjBase.Draw(eyeInverse, projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
+
+
+	tr = { 0.0, 0.0, 0.0 };
+	ro = { 0.0, 0.0, 0.0 };
+	sc = { 0.1, 0.1, 0.1 };
 	Entity Obj1(tr, ro, sc);
-	Obj1.parent = NULL;
-	Obj1.geometry.numIndices = 17589;
+	Obj1.parent = &ObjBase;
+	Obj1.geometry.numIndices = 30152;
 	make3DObject();
 	Obj1.Draw(eyeInverse, projectionMatrix, positionAttribute, normalAttribute, modelViewMatrixUniformLocation, normalMatrixUniformLocation);
 	
@@ -385,7 +419,7 @@ void display(void) {
 	/*Disabling Attributes.	*/	
 	glDisableVertexAttribArray(positionAttribute);
 	glDisableVertexAttribArray(normalAttribute);
-
+	glDisableVertexAttribArray(texCoordAttribute);
 	
 	glutSwapBuffers();
 }
@@ -408,48 +442,25 @@ void init() {
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	normalMatrixUniformLocation = glGetUniformLocation(program, "normalMatrix");
 	color = glGetUniformLocation(program, "uColor");
-	
-
-	lights[0].lightColor = glGetUniformLocation(program, "lights[0].lightColor");
-	lights[0].lightDirection = glGetUniformLocation(program, "lights[0].lightDirection");
-	lights[0].specularLightDirection = glGetUniformLocation(program, "lights[0].specularLightColor");
-
-	lights[1].lightColor = glGetUniformLocation(program, "lights[1].lightColor");
-	lights[1].lightDirection = glGetUniformLocation(program, "lights[1].lightDirection");
-	lights[1].specularLightDirection = glGetUniformLocation(program, "lights[1].specularLightColor");
-
-/*
-	lights[0].lightColor = Cvec3(0.2, 0.0, 1.0);
-	lights[0].lightDirection = Cvec3(-0.5447, 0.5774, 0.5774);
-	lights[0].specularLightDirection = Cvec3(1.0, 1.0, 1.0);
-
-	lights[1].lightColor = Cvec3(0.1, 0.1, 1.0);
-	lights[1].lightDirection = Cvec3(0.5447, 0.5774, 0.5774);
-	lights[1].specularLightDirection = Cvec3(1.0, 1.0, 1.0);
-	*/
-	
-
 
 	lightColor[0] = glGetUniformLocation(program, "lights[0].lightColor");
-	lightDirection[0] = glGetUniformLocation(program, "lights[0].lightDirection");
+	lightDirection[0] = glGetUniformLocation(program, "lights[0].lightPosition");
 	specularLightColor[0] = glGetUniformLocation(program, "lights[0].specularLightColor");
-	glUniform3f(lightDirection[0], -0.5447, 0.5774, 0.5774);
+	glUniform3f(lightDirection[0], -5.0, 5.0, 5.0);
 	glUniform3f(lightColor[0], 1.0, 0.0, 1.0);
 	glUniform3f(specularLightColor[0], 1.0, 1.0, 1.0);
-	/*
-	cout << lightColor[0];
-*/
+	
 	lightColor[1] = glGetUniformLocation(program, "lights[1].lightColor");
-	lightDirection[1] = glGetUniformLocation(program, "lights[1].lightDirection");
+	lightDirection[1] = glGetUniformLocation(program, "lights[1].lightPosition");
 	specularLightColor[1] = glGetUniformLocation(program, "lights[1].specularLightColor");
-	glUniform3f(lightDirection[1], 0.5447, 0.5774, 0.5774);
+	glUniform3f(lightDirection[1], 5.0, 5.0, 5.0);
 	glUniform3f(lightColor[1], 1.0, 1.0, 0.0);
 	glUniform3f(specularLightColor[1], 1.0, 1.0, 1.0);
-/*
-	cout << lightColor[1];
-	*/
-	//	glUniform3f(color, 1.0, 1.2, 0.0);
-	//	glUniform3f(lightDirection2, 0.5774, 0.5774, 0.5774);
+
+	diffuseTexture = loadGLTexture("Monk_Giveaway/Monk_D.tga");
+	diffuseTextureUniformLocation = glGetUniformLocation(program, "diffuseTexture");
+	glUniform1i(diffuseTextureUniformLocation, 0);
+
 	
 
 	glGenBuffers(1, &VertexBO);
