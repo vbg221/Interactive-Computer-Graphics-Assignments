@@ -34,7 +34,7 @@ void main() {
 
 		vec3 v = normalize(-varyingPosition);
 		vec3 h = normalize(v + lights[i].lightPosition);
-		float specular = pow(max(0.0, dot(h, varyingNormal)), 64.0);
+		float specular = pow(max(0.1, dot(h, varyingNormal)), 64.0);
 		specularColor += lights[i].specularLightColor * specular ;
 	}
 
