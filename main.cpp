@@ -32,7 +32,7 @@ GLuint VertexBO;
 GLuint IndexBO;
 
 GLuint color;
-GLuint lightDirection[2];
+GLuint lightPosition[2];
 GLuint lightColor[2];
 GLuint specularLightColor[2];
 GLuint texCoordAttribute;
@@ -46,7 +46,7 @@ GLuint specularLightColorUniform;
 Matrix4 eyeMatrix;
 Matrix4 projectionMatrix;
 
-Cvec4 lightDirectionTemp;
+Cvec4 lightPositionTemp;
 
 
 
@@ -75,8 +75,8 @@ std::vector<unsigned short> idx;
 
 struct Light {
 	Cvec3 lightColor;
-	Cvec3 lightDirection;
-	Cvec3 specularLightDirection;
+	Cvec3 lightPosition;
+	Cvec3 specularlightPosition;
 };
 Light lights[2];
 
@@ -452,23 +452,23 @@ void init() {
 	specularTexture = loadGLTexture("Monk_Giveaway/Monk_S.tga");
 
 	lightColor[0] = glGetUniformLocation(program, "lights[0].lightColor");
-	lightDirection[0] = glGetUniformLocation(program, "lights[0].lightPosition");
+	lightPosition[0] = glGetUniformLocation(program, "lights[0].lightPosition");
 	specularLightColor[0] = glGetUniformLocation(program, "lights[0].specularLightColor");
 	
-	lightDirectionTemp = Cvec4(-1.0, 1.0, 1.0, 1.0);
-	lightDirectionTemp = normalMatrix(eyeMatrix) * lightDirectionTemp;
+	lightPositionTemp = Cvec4(-10.0, 10.0, 10.0, 1.0);
+	lightPositionTemp = normalMatrix(eyeMatrix) * lightPositionTemp;
 
-	glUniform3f(lightDirection[0], lightDirectionTemp[0], lightDirectionTemp[1], lightDirectionTemp[2]);
+	glUniform3f(lightPosition[0], lightPositionTemp[0], lightPositionTemp[1], lightPositionTemp[2]);
 	glUniform3f(lightColor[0], 1.0, 1.0, 1.0);
 	glUniform3f(specularLightColor[0], 1.0, 1.0, 1.0);
 	
-	lightDirectionTemp = Cvec4(1.0, 1.0, 1.0, 1.0);
-	lightDirectionTemp = normalMatrix(eyeMatrix) * lightDirectionTemp;
+	lightPositionTemp = Cvec4(10.0, 10.0, 10.0, 1.0);
+	lightPositionTemp = normalMatrix(eyeMatrix) * lightPositionTemp;
 
 	lightColor[1] = glGetUniformLocation(program, "lights[1].lightColor");
-	lightDirection[1] = glGetUniformLocation(program, "lights[1].lightPosition");
+	lightPosition[1] = glGetUniformLocation(program, "lights[1].lightPosition");
 	specularLightColor[1] = glGetUniformLocation(program, "lights[1].specularLightColor");
-	glUniform3f(lightDirection[1], lightDirectionTemp[0], lightDirectionTemp[1], lightDirectionTemp[2]);
+	glUniform3f(lightPosition[1], lightPositionTemp[0], lightPositionTemp[1], lightPositionTemp[2]);
 	glUniform3f(lightColor[1], 1.0, 1.0, 1.0);
 	glUniform3f(specularLightColor[1], 1.0, 1.0, 1.0);
 
