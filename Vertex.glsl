@@ -12,8 +12,8 @@ varying vec2 varyingTexCoord;
 
 
 void main() {
-	varyingNormal = normalize((normalMatrix * normal).xyz);
 	varyingTexCoord = texCoord;
+	varyingNormal = normalize((normalMatrix * normal).xyz);
 	vec4 p = modelViewMatrix * position;
 	varyingPosition = p.xyz;
 	gl_Position = projectionMatrix * p;
