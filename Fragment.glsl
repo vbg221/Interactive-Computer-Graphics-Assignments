@@ -4,6 +4,9 @@ varying vec2 varyingTexCoord;
 
 uniform sampler2D diffuseTexture;
 uniform sampler2D specularTexture;
+uniform sampler2D normalTexture;
+
+varying mat3 varyingTBNMatrix;
 
 struct Light{
 	vec3 lightPosition;
@@ -22,6 +25,9 @@ void main() {
 	vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
 	vec3 specularColor = vec3(0.0, 0.0, 0.0);
 	
+	vec3 textureNormal = normalize((texture2D(normalTexture, varyingTexCoord).xyz * 2.0) - 1.0);
+	textureNormal = normalize(varyingTBNMatrix * textureNormal);
+
 	for(int i=0; i<2; i++) {
 		vec3 lightDirection = -normalize(varyingPosition - lights[i].lightPosition);
 		float diffuse = max(0.0, dot(varyingNormal, lightDirection));

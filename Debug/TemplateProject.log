@@ -1,23 +1,24 @@
 ﻿  main.cpp
-d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(304): warning C4018: '<': signed/unsigned mismatch
-d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(305): warning C4018: '<': signed/unsigned mismatch
-d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(316): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(323): warning C4267: 'argument': conversion from 'size_t' to 'unsigned short', possible loss of data
-d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(387): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(461): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(471): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(341): warning C4018: '<': signed/unsigned mismatch
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(342): warning C4018: '<': signed/unsigned mismatch
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(353): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(360): warning C4267: 'argument': conversion from 'size_t' to 'unsigned short', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(373): warning C4018: '<': signed/unsigned mismatch
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(448): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(529): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(539): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
 d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\geometrymaker.h(60): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(226): note: see reference to function template instantiation 'void makeCube<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,VtxOutIter,IdxOutIter)' being compiled
+  d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(243): note: see reference to function template instantiation 'void makeCube<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPNTBTG>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,VtxOutIter,IdxOutIter)' being compiled
           with
           [
-              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,
+              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPNTBTG>>>,
               IdxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>
           ]
 d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\geometrymaker.h(151): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(254): note: see reference to function template instantiation 'void makeSphere<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,int,int,VtxOutIter,IdxOutIter)' being compiled
+  d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(271): note: see reference to function template instantiation 'void makeSphere<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPNTBTG>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,int,int,VtxOutIter,IdxOutIter)' being compiled
           with
           [
-              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,
+              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPNTBTG>>>,
               IdxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>
           ]
 d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\geometrymaker.h(152): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
@@ -25,10 +26,10 @@ d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-comp
 d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\geometrymaker.h(156): warning C4244: 'argument': conversion from 'double' to 'const float', possible loss of data
 d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\geometrymaker.h(164): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\geometrymaker.h(40): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(282): note: see reference to function template instantiation 'void makePlane<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,VtxOutIter,IdxOutIter)' being compiled
+  d:\nyu\sem 1\inteactive computer graphics\my program\homework 3\interactive-computer-graphics-assignments\main.cpp(299): note: see reference to function template instantiation 'void makePlane<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPNTBTG>>>,std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>>(float,VtxOutIter,IdxOutIter)' being compiled
           with
           [
-              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPN>>>,
+              VtxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<VertexPNTBTG>>>,
               IdxOutIter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<unsigned short>>>
           ]
   TemplateProject.vcxproj -> D:\NYU\Sem 1\Inteactive Computer Graphics\My Program\Homework 3\Interactive-Computer-Graphics-Assignments\Debug\TemplateProject.exe

@@ -42,6 +42,11 @@ GLuint specularTexture;
 GLuint specularTextureUniformLocation;
 GLuint specularLightColorUniform;
 
+GLuint binormalAttribute;
+GLuint tangentAttribute;
+GLuint normalTextureUniformLocation;
+GLuint normalTexture;
+
 
 Matrix4 eyeMatrix;
 Matrix4 projectionMatrix;
@@ -53,23 +58,24 @@ Cvec4 lightDirectionTemp;
 /*
 	This structure holds the Vertex data : vertices and normals position of the Object.
 */
-struct VertexPN {
-	Cvec3f p;
-	Cvec3f n;
+struct VertexPNTBTG {
+	Cvec3f p, n, b, tg;
 	Cvec2f t;
 
-	VertexPN() {}
-	VertexPN(float x, float y, float z, float nx, float ny, float nz) : p(x,y,z), n(nx, ny, nz) {}
+	VertexPNTBTG() {}
+	VertexPNTBTG(float x, float y, float z, float nx, float ny, float nz) : p(x,y,z), n(nx, ny, nz) {}
 
-	VertexPN& operator = (const GenericVertex& v) {
+	VertexPNTBTG& operator = (const GenericVertex& v) {
 		p = v.pos;
 		n = v.normal;
 		t = v.tex;
+		b = v.binormal;
+		tg = v.tangent;
 		return *this;
 	}
 };
 
-std::vector<VertexPN> vtx;
+std::vector<VertexPNTBTG> vtx;
 std::vector<unsigned short> idx;
 
 
@@ -95,22 +101,33 @@ struct Geometry{
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularTexture);
 
+		glUniform1i(normalTextureUniformLocation, 2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, normalTexture);
+
 		glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-		glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, p));
+		glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPNTBTG), (void*)offsetof(VertexPNTBTG, p));
 		glEnableVertexAttribArray(positionAttribute);
 
 		//glBindBuffer(GL_ARRAY_BUFFER, texCoordAttribute);
-		glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, t));
+		glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPNTBTG), (void*)offsetof(VertexPNTBTG, t));
 		glEnableVertexAttribArray(texCoordAttribute);
 
-//		glEnableVertexAttribArray(normalAttribute);
-		glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, n));
+		//glEnableVertexAttribArray(normalAttribute);
+		glVertexAttribPointer(normalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPNTBTG), (void*)offsetof(VertexPNTBTG, n));
 		glEnableVertexAttribArray(normalAttribute);
 
-		
+		//glEnableVertexAttribArray(binormalAttribute);
+		glVertexAttribPointer(binormalAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPNTBTG), (void*)offsetof(VertexPNTBTG, b));
+		glEnableVertexAttribArray(binormalAttribute);
+
+		//glEnableVertexAttribArray(tangentAttribute);
+		glVertexAttribPointer(tangentAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPNTBTG), (void*)offsetof(VertexPNTBTG, tg));
+		glEnableVertexAttribArray(tangentAttribute);
+
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
-		glDrawElements(GL_TRIANGLES, sizeof(VertexPN) * numIndices, GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, sizeof(VertexPNTBTG) * numIndices, GL_UNSIGNED_SHORT, 0);
 
 		//glDisableVertexAttribArray(positionAttribute);
 		//glDisableVertexAttribArray(normalAttribute);
@@ -220,14 +237,14 @@ void makeCube(float size) {
 
 	getCubeVbIbLen(vbLen, ibLen);
 
-	std::vector<VertexPN> vtx(vbLen);
+	std::vector<VertexPNTBTG> vtx(vbLen);
 	std::vector<unsigned short> idx(ibLen);
 
 	makeCube(size, vtx.begin(), idx.begin());
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPNTBTG), vtx.data(), GL_STATIC_DRAW);
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
@@ -248,14 +265,14 @@ void makeSphere(float radius) {
 
 	getSphereVbIbLen(slices, stacks, vbLen, ibLen);
 
-	std::vector<VertexPN> vtx(vbLen);
+	std::vector<VertexPNTBTG> vtx(vbLen);
 	std::vector<unsigned short> idx(ibLen);
 
 	makeSphere(radius, slices, stacks, vtx.begin(), idx.begin());
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPNTBTG), vtx.data(), GL_STATIC_DRAW);
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
@@ -276,21 +293,41 @@ void makePlane(float size) {
 
 	getPlaneVbIbLen(vbLen, ibLen);
 
-	std::vector<VertexPN> vtx(vbLen);
+	std::vector<VertexPNTBTG> vtx(vbLen);
 	std::vector<unsigned short> idx(ibLen);
 
 	makePlane(size, vtx.begin(), idx.begin());
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPNTBTG), vtx.data(), GL_STATIC_DRAW);
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 }
 
-void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices, std::vector<unsigned short> &outIndices) {
+void calculateFaceTangent(const Cvec3f &v1, const Cvec3f &v2, const Cvec3f &v3, const Cvec2f &texCoord1, const Cvec2f &texCoord2,
+	const Cvec2f &texCoord3, Cvec3f &tangent, Cvec3f &binormal) {
+	Cvec3f side0 = v1 - v2;
+	Cvec3f side1 = v3 - v1;
+	Cvec3f normal = cross(side1, side0);
+	normalize(normal);
+	float deltaV0 = texCoord1[1] - texCoord2[1];
+	float deltaV1 = texCoord3[1] - texCoord1[1];
+	tangent = side0 * deltaV1 - side1 * deltaV0;
+	normalize(tangent);
+	float deltaU0 = texCoord1[0] - texCoord2[0];
+	float deltaU1 = texCoord3[0] - texCoord1[0];
+	binormal = side0 * deltaU1 - side1 * deltaU0;
+	normalize(binormal);
+	Cvec3f tangentCross = cross(tangent, binormal);
+	if (dot(tangentCross, normal) < 0.0f) {
+		tangent = tangent * -1;
+	}
+}
+
+void loadObjFile(const std::string &fileName, std::vector<VertexPNTBTG> &outVertices, std::vector<unsigned short> &outIndices) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -307,7 +344,7 @@ void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices
 				unsigned int vertexOffset = shapes[i].mesh.indices[j].vertex_index * 3;
 				unsigned int normalOffset = shapes[i].mesh.indices[j].normal_index * 3;
 				unsigned int textOffset = shapes[i].mesh.indices[j].texcoord_index * 2;
-				VertexPN v;
+				VertexPNTBTG v;
 				v.p[0] = attrib.vertices[vertexOffset];
 				v.p[1] = attrib.vertices[vertexOffset + 1];
 				v.p[2] = attrib.vertices[vertexOffset + 2];
@@ -322,24 +359,39 @@ void loadObjFile(const std::string &fileName, std::vector<VertexPN> &outVertices
 				outVertices.push_back(v);
 				outIndices.push_back(vtx.size() - 1);
 
+				
+
+
 //				glActiveTexture(GL_TEXTURE0);
 //				glBindTexture(GL_TEXTURE_2D, diffuseTexture);
 				
-				glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-				glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
 				
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
-				glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
-
-				glEnableVertexAttribArray(texCoordAttribute);
-				glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, t));
-
 
 			}
 		}
 
-		
-		
+		for (int i = 0; i < outVertices.size(); i += 3) {
+			Cvec3f tangent;
+			Cvec3f binormal;
+			calculateFaceTangent(outVertices[i].p, outVertices[i + 1].p, outVertices[i + 2].p,
+				outVertices[i].t, outVertices[i + 1].t, outVertices[i + 2].t, tangent, binormal);
+			outVertices[i].tg = tangent;
+			outVertices[i + 1].tg = tangent;
+			outVertices[i + 2].tg = tangent;
+			outVertices[i].b = binormal;
+			outVertices[i + 1].b = binormal;
+			outVertices[i + 2].b = binormal;
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
+		glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPNTBTG), vtx.data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(texCoordAttribute);
+		glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPNTBTG), (void*)offsetof(VertexPNTBTG, t));
+
 		cout << "Loaded";
 
 		
@@ -363,16 +415,25 @@ void make3DObject() {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
 
+	glUniform1i(specularTextureUniformLocation, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, specularTexture);
+
+	glUniform1i(normalTextureUniformLocation, 2);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, normalTexture);
+
+
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBO);
-	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPN), vtx.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vtx.size() * sizeof(VertexPNTBTG), vtx.data(), GL_STATIC_DRAW);
 	
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(unsigned short), idx.data(), GL_STATIC_DRAW);
 
 //	glEnableVertexAttribArray(texCoordAttribute);
-//	glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPN), (void*)offsetof(VertexPN, t));
+//	glVertexAttribPointer(texCoordAttribute, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPNTBTG), (void*)offsetof(VertexPNTBTG, t));
 
 }
 
@@ -441,6 +502,10 @@ void init() {
 	modelViewMatrixUniformLocation = glGetUniformLocation(program, "modelViewMatrix");
 	projectionMatrixUniformLocation = glGetUniformLocation(program, "projectionMatrix");
 	normalMatrixUniformLocation = glGetUniformLocation(program, "normalMatrix");
+	binormalAttribute = glGetUniformLocation(program, "binormal");
+	tangentAttribute = glGetUniformLocation(program, "tangent");
+
+
 //	color = glGetUniformLocation(program, "uColor");
 
 	//glUniform3f(color, 1.0, 1.2, 1.0);
@@ -450,6 +515,9 @@ void init() {
 	
 	specularTextureUniformLocation = glGetUniformLocation(program, "specularTexture");
 	specularTexture = loadGLTexture("Monk_Giveaway/Monk_S.tga");
+
+	normalTextureUniformLocation = glGetUniformLocation(program, "normalTexture");
+	normalTexture = loadGLTexture("Monk_Giveaway/Monk_N.tga");
 
 	lightColor[0] = glGetUniformLocation(program, "lights[0].lightColor");
 	lightDirection[0] = glGetUniformLocation(program, "lights[0].lightPosition");
